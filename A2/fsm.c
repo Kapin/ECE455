@@ -1,6 +1,6 @@
 #include "fsm.h"
 
-int fsm_init(struct fsm *state_machine, int start_state, int num_states, int num_events, int **transition_matrix)
+int fsm_init(fsm *state_machine, int start_state, int num_states, int num_events, int **transition_matrix)
 {
     if (state_machine == 0) {
         return 1;
@@ -14,7 +14,7 @@ int fsm_init(struct fsm *state_machine, int start_state, int num_states, int num
     return 0;
 }
 
- int fsm_next_state(struct fsm *state_machine, int event)
+ int fsm_next_state(fsm *state_machine, int event)
 {
     if (state_machine == 0)
     {

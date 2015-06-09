@@ -3,6 +3,8 @@
 #include "fsm.h"
 
 
+#define DASH_THRESHOLD 3
+
 enum button_states
 {
     StartButtonState = 0,
@@ -44,8 +46,8 @@ enum morse_events
 
 int button_matrix[NumButtonStates][NumButtonEvents] = 
 {
-    { PushedButtonState, -1, -1, -1 },
-    { -1, DotButtonState, DashButtonState, -1 },
+    { PushedButtonState, -1, -1, StartButtonState },
+    { -1, DotButtonState, DashButtonState, StartButtonState },
     { -1, -1, -1, StartButtonState },
     { -1, -1, -1, StartButtonState }
 };
@@ -62,9 +64,15 @@ int morse_matrix[NumStates][NumEvents] =
     { -1, -1, StartState }
 };
 
-struct fsm button_fsm, morse_fsm;
+fsm button_fsm, morse_fsm;
+unsigned long button_push_time = 0L;
+unsigned long global_clock = 0L;
+int edge_detected = 0;
+int prev_val = 0;
+int done = 0;
 
 static void setup_fsms(void);
+static void setup_button(void);
 static void setup_clock(void);
 void button_transition(int);
 void morse_transition(int);
@@ -76,8 +84,11 @@ int main(void)
     GLCD_Init();
     setup_fsms();
     setup_clock();
+    setup_button();
     
-    return 0;
+    while(done == 0)
+    {
+    }
 }
 
 static void setup_fsms(void)
@@ -91,6 +102,12 @@ static void setup_fsms(void)
     {
         return;
     }
+}
+
+static void setup_button(void)
+{
+    LPC_PINCON->PINSEL4 &= ~(3 << 20);
+    LPC_GPIO2->FIODIR &= ~(1 << 10);
 }
 
 static void setup_clock(void)
@@ -112,16 +129,20 @@ void button_transition(int state)
     switch(state)
     {
         case StartButtonState:
-            //reset pushed marker
             break;
         case PushedButtonState:
-            //set pushed marker
+            button_push_time = global_clock;
             break;
         case DotButtonState:
+            GLCD_Clear(White);
             fsm_next_state(&morse_fsm, DotEvent);
+            GLCD_DisplayString(0, 0, 1, "dot");
+            fsm_next_state(&button_fsm, ButtonReset);
             break;
         case DashButtonState:
             fsm_next_state(&morse_fsm, DashEvent);
+            GLCD_DisplayString(0, 0, 1, "dash");
+            fsm_next_state(&button_fsm, ButtonReset);
             break;
         default:
             break;
@@ -133,9 +154,9 @@ void morse_transition(int state)
     switch(state)
     {
         case StartState:
-            GLCD_Clear();
             break;
         case DotState:
+            GLCD_Clear(White);
             break;
         case DotDashState:
             break;
@@ -150,6 +171,7 @@ void morse_transition(int state)
         case DotDashDashDotDashDotDotState:
             GLCD_DisplayString(0, 0, 1, "Correct");
             fsm_next_state(&morse_fsm, ResetEvent);
+            done = 1;
             break;
         default:
             break;
@@ -158,7 +180,49 @@ void morse_transition(int state)
 
 void handle_tick(void)
 {	
+    int button_val;
 	LPC_TIM0->IR |= 0x01;
+    
+    global_clock++;
+    
+    button_val = ~(LPC_GPIO2->FIOPIN >> 10) & 0x01;
+    
+    if (edge_detected == 0)
+    {
+        if (button_val != prev_val)
+        {
+            edge_detected = 1;
+            prev_val = button_val;
+            
+            if (button_val == 1)
+            {
+                fsm_next_state(&button_fsm, ButtonPressed);
+            }
+        }
+        
+        return;
+    }
+    
+    edge_detected = 0;
+    
+    if (button_val != prev_val)
+    {
+        prev_val = button_val;
+        fsm_next_state(&button_fsm, ButtonReset);
+        return;
+    }
+    
+    if (button_val == 0)
+    {
+        if (global_clock - button_push_time < DASH_THRESHOLD)
+        {
+            fsm_next_state(&button_fsm, ButtonLifted1Period);
+        }
+        else
+        {
+            fsm_next_state(&button_fsm, ButtonLifted3Periods);
+        }
+    }
 }
 
 __asm void TIMER0_IRQHandler(void)
