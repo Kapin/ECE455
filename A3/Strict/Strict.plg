@@ -1,0 +1,17 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Project:</h2>
+C:\Users\Josh\Documents\GitHub\ECE455\A3\Strict\Strict.uvproj
+Project File Date:  06/30/2015
+
+<h2>Output:</h2>
+Rebuild target 'Target 1'
+assembling startup_LPC17xx.s...
+compiling GLCD_SPI_LPC1700.c...
+compiling system_LPC17xx.c...
+compiling strict.c...
+linking...
+Program Size: Code=3300 RO-data=6680 RW-data=12 ZI-data=612  
+"Strict.axf" - 0 Error(s), 0 Warning(s).
