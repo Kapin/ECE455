@@ -14,7 +14,7 @@
 ### ADS-LD Output File: 'bursty.axf'
 ### ADS-LD Command File: 'bursty.lnp'
 ### Checking for dirty Components...
-### Creating CmdFile 'bursty.lnp', Handle=0x000005AC
+### Creating CmdFile 'bursty.lnp', Handle=0x0000074C
 ### Writing '.lnp' file
 ### ADS-LD Command file 'bursty.lnp' is ready.
 ### ADS-LD: About to start ADS-LD Thread.

@@ -14,7 +14,7 @@
 ### ADS-LD Output File: 'Strict.axf'
 ### ADS-LD Command File: 'Strict.lnp'
 ### Checking for dirty Components...
-### Creating CmdFile 'Strict.lnp', Handle=0x000004D8
+### Creating CmdFile 'Strict.lnp', Handle=0x00000424
 ### Writing '.lnp' file
 ### ADS-LD Command file 'Strict.lnp' is ready.
 ### ADS-LD: About to start ADS-LD Thread.

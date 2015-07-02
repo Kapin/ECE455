@@ -37,7 +37,6 @@ static void Setup_INT0(void)
 static void Setup_LED(void)
 {
     LPC_GPIO1->FIODIR |= 0xB0000000;
-    LPC_GPIO1->FIOCLR = BUTTON_28;
 }
 
 static void Setup_GLCD(void)
@@ -49,8 +48,8 @@ static void Setup_GLCD(void)
 static void Trigger_Timer(void)
 {
     LPC_TIM0->TCR = 0x02;
-    LPC_TIM0->PR = 12499;
-    LPC_TIM0->MR0 = 20000;
+    LPC_TIM0->PR = 25000;
+    LPC_TIM0->MR0 = 10000;
     LPC_TIM0->MCR = 0x03;
     
     NVIC_EnableIRQ(TIMER0_IRQn);
@@ -68,9 +67,6 @@ void EINT3_IRQHandler_C(void)
     {
         NVIC_DisableIRQ(EINT3_IRQn);
     }
-    
-    LPC_GPIO1->FIOSET = BUTTON_28;
-    LPC_GPIO1->FIOCLR = BUTTON_28;
 }
 
 void TIMER0_IRQHandler_C(void)
@@ -78,6 +74,8 @@ void TIMER0_IRQHandler_C(void)
     LPC_TIM0->IR |= 0x01;
     
     burst_counter = 3;
+		
+		GLCD_Clear(White);
     
     NVIC_EnableIRQ(EINT3_IRQn);
 }

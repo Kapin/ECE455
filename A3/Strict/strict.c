@@ -8,6 +8,7 @@ static void Setup_INT0(void);
 static void Setup_LED(void);
 static void Setup_GLCD(void);
 static void Trigger_Timer(void);
+static void Delay(unsigned int);
 void EINT3_IRQHandler_C(void);
 void TIMER0_IRQHandler_C(void);
 
@@ -34,7 +35,7 @@ static void Setup_INT0(void)
 static void Setup_LED(void)
 {
     LPC_GPIO1->FIODIR |= 0xB0000000;
-    LPC_GPIO1->FIOCLR = BUTTON_28;
+		LPC_GPIO1->FIOCLR = BUTTON_28;
 }
 
 static void Setup_GLCD(void)
@@ -46,8 +47,8 @@ static void Setup_GLCD(void)
 static void Trigger_Timer(void)
 {
     LPC_TIM0->TCR = 0x02;
-    LPC_TIM0->PR = 12499;
-    LPC_TIM0->MR0 = 10000;
+    LPC_TIM0->PR = 25000;
+    LPC_TIM0->MR0 = 5000;
     LPC_TIM0->MCR = 0x01;
     
     NVIC_EnableIRQ(TIMER0_IRQn);
@@ -55,27 +56,50 @@ static void Trigger_Timer(void)
     LPC_TIM0->TCR = 0x01;
 }
 
+static void Delay(unsigned int delay)
+{
+	unsigned int i = 0, j = 0;
+	unsigned volatile int delayCounter = 0;
+	
+	__disable_irq();
+	
+	for (; i < delay; i++)
+	{
+		for (; j < 11050000; j++)
+		{
+			delayCounter += 10;
+			delayCounter *= 10;
+			delayCounter = 0;
+		}
+	}
+	
+	__enable_irq();
+}
+
 void EINT3_IRQHandler_C(void)
 {
-    NVIC_DisableIRQ(EINT3_IRQn);
     LPC_GPIOINT->IO2IntClr |= 1 << 10;
+	  NVIC_DisableIRQ(EINT3_IRQn);
+	
+	  Trigger_Timer();
+	
+    GLCD_DisplayString(0, 0, 1, "INT0 Fired");
     
-    GLCD_DisplayString(0, 0, 1, "INT0 Interrupt Fired! Waiting 5 seconds.");
     LPC_GPIO1->FIOSET = BUTTON_28;
-    
-    Trigger_Timer();
-    
-    LPC_GPIO1->FIOCLR = BUTTON_28;
+		
+		Delay(500);
+	
+		LPC_GPIO1->FIOCLR = BUTTON_28;
 }
 
 void TIMER0_IRQHandler_C(void)
 {
     LPC_TIM0->IR |= 0x01;
-    
-    NVIC_EnableIRQ(EINT3_IRQn);
-    NVIC_DisableIRQ(TIMER0_IRQn);
-
-    GLCD_Clear(White);
+		
+		GLCD_Clear(White);
+		
+		NVIC_DisableIRQ(TIMER0_IRQn);
+	  NVIC_EnableIRQ(EINT3_IRQn);
 }
 
 __asm void EINT3_IRQHandler(void)
